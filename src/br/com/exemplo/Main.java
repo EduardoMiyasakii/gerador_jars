@@ -12,15 +12,15 @@ public class Main {
     }
 
     private static void criarInterface() {
-        JFrame frame = new JFrame("Clonar Repositórios do GitHub");
+        JFrame frame = new JFrame("Clonar Repositórios e Gerar JARs");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(500, 200);
+        frame.setSize(600, 200);
         frame.setLayout(new FlowLayout());
 
-        JButton btnSelecionar = new JButton("Selecionar CSV e Pasta de Destino");
+        JButton btnSelecionar = new JButton("Selecionar CSV e Pastas");
         btnSelecionar.addActionListener(e -> {
             try {
-                // Escolher arquivo CSV
+                // 1. Escolher arquivo CSV
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setDialogTitle("Escolha o arquivo CSV");
                 fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -31,16 +31,27 @@ public class Main {
                 }
                 File arquivoCSV = fileChooser.getSelectedFile();
 
-                // Escolher pasta de destino
-                JFileChooser dirChooser = new JFileChooser();
-                dirChooser.setDialogTitle("Escolha a pasta de destino para clonar os repositórios");
-                dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                // 2. Escolher pasta para clonar os repositórios
+                JFileChooser cloneChooser = new JFileChooser();
+                cloneChooser.setDialogTitle("Escolha a pasta para clonar os repositórios");
+                cloneChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-                if (dirChooser.showOpenDialog(frame) != JFileChooser.APPROVE_OPTION) {
-                    JOptionPane.showMessageDialog(frame, "Nenhuma pasta selecionada.");
+                if (cloneChooser.showOpenDialog(frame) != JFileChooser.APPROVE_OPTION) {
+                    JOptionPane.showMessageDialog(frame, "Nenhuma pasta selecionada para clonar.");
                     return;
                 }
-                File pastaDestino = dirChooser.getSelectedFile();
+                File pastaClones = cloneChooser.getSelectedFile();
+
+                // 3. Escolher pasta para salvar os JARs
+                JFileChooser jarChooser = new JFileChooser();
+                jarChooser.setDialogTitle("Escolha a pasta para salvar os JARs");
+                jarChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+                if (jarChooser.showOpenDialog(frame) != JFileChooser.APPROVE_OPTION) {
+                    JOptionPane.showMessageDialog(frame, "Nenhuma pasta selecionada para os JARs.");
+                    return;
+                }
+                File pastaJars = jarChooser.getSelectedFile();
 
                 // Processar CSV
                 List<String> repositorios = CSVReader.lerRepositorios(arquivoCSV.getAbsolutePath());
@@ -50,8 +61,11 @@ public class Main {
                 }
 
                 for (String repo : repositorios) {
-                    GitUtils.clonarRepositorio(repo, pastaDestino);
-                    AntUtils.gerarJar(pastaDestino, repo);
+                    // Clonar
+                    GitUtils.clonarRepositorio(repo, pastaClones);
+
+                    // Gerar JARs no local escolhido
+                    AntUtils.gerarJar(pastaClones, repo, pastaJars);
                 }
 
                 JOptionPane.showMessageDialog(frame, "Processo concluído com sucesso!");

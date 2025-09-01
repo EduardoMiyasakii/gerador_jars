@@ -4,7 +4,7 @@ import java.io.File;
 
 public class AntUtils {
 
-    public static void gerarJar(File pastaDestino, String repoUrl) {
+    public static void gerarJar(File pastaDestino, String repoUrl, File pastaJars) {
         try {
             String nomeRepo = repoUrl.substring(repoUrl.lastIndexOf("/") + 1).replace(".git", "");
             File buildFile = new File(pastaDestino, nomeRepo + "/empacotamento/ant/build.xml");
@@ -16,7 +16,8 @@ public class AntUtils {
 
             System.out.println("Build file: " + buildFile.getAbsolutePath());
 
-            ProcessBuilder builder = criarProcessBuilder(buildFile);
+            // Passa o diretório de saída como propriedade ANT_OPTS
+            ProcessBuilder builder = criarProcessBuilder(buildFile, pastaJars);
             builder.directory(buildFile.getParentFile());
             builder.inheritIO();
 
@@ -32,19 +33,20 @@ public class AntUtils {
         }
     }
 
-    private static ProcessBuilder criarProcessBuilder(File buildFile) {
+    private static ProcessBuilder criarProcessBuilder(File buildFile, File pastaJars) {
         String os = System.getProperty("os.name").toLowerCase();
+        String outputProp = "-Ddist.dir=" + pastaJars.getAbsolutePath(); // Assume que build.xml usa ${dist.dir}
 
         if (os.contains("win")) {
-            // Windows: usa cmd /c ant (assume que ant está no PATH)
             return new ProcessBuilder(
                     "cmd.exe", "/c", "ant",
+                    outputProp,
                     "-f", buildFile.getAbsolutePath()
             );
         } else {
-            // Linux/macOS: chama ant direto
             return new ProcessBuilder(
                     "ant",
+                    outputProp,
                     "-f", buildFile.getAbsolutePath()
             );
         }
